@@ -58,36 +58,40 @@ module.exports = function (app) {
       res.json(issue);
     })
     
-    .put(function (req, res){
+    .put(function (req, res) {
       let project = req.params.project;
-      const { _id, issue_title, issue_text, created_by, assigned_to, status_text, open } = req.body;
-      if(!_id) return res.json({ error: 'missing _id' });
+      const { _id, ...fields } = req.body;
+
+      if (!_id) return res.json({ error: 'missing _id' });
 
       const db = getDB();
       const issues = db[project] || [];
-      const idx = issues.findIndex(i => i._id === _id);
-  if(idx === -1) return res.json({ error: 'could not update', '_id': _id });
+  const idx = issues.findIndex(i => i._id === _id);
+  if (idx === -1) return res.json({ error: 'could not update', '_id': _id });
 
-      // check if there's at least one field to update
-      if(!issue_title && !issue_text && !created_by && !assigned_to && !status_text && (open === undefined || open === null)){
+      // lọc ra các field có giá trị hợp lệ để update
+      const updates = Object.keys(fields).filter(
+        key => fields[key] !== undefined && fields[key] !== ''
+      );
+
+      if (updates.length === 0) {
         return res.json({ error: 'no update field(s) sent', '_id': _id });
       }
 
       const issue = issues[idx];
-      if(issue_title) issue.issue_title = issue_title;
-      if(issue_text) issue.issue_text = issue_text;
-      if(created_by) issue.created_by = created_by;
-      if(assigned_to !== undefined) issue.assigned_to = assigned_to;
-      if(status_text !== undefined) issue.status_text = status_text;
-      if(open !== undefined){
-        // allow string or boolean
-        issue.open = (open === 'false' || open === false) ? false : true;
-      }
+      updates.forEach(key => {
+        if (key === 'open') {
+          issue.open = (fields[key] === 'false' || fields[key] === false) ? false : true;
+        } else {
+          issue[key] = fields[key];
+        }
+      });
+
       issue.updated_on = new Date().toISOString();
 
-      res.json({ result: 'successfully updated', _id });
+      return res.json({ result: 'successfully updated', '_id': _id });
     })
-    
+
     .delete(function (req, res){
       let project = req.params.project;
       const { _id } = req.body;
@@ -96,7 +100,7 @@ module.exports = function (app) {
       const db = getDB();
       const issues = db[project] || [];
       const idx = issues.findIndex(i => i._id === _id);
-      if(idx === -1) return res.json({ error: 'could not delete', _id });
+      if(idx === -1) return res.json({ error: 'could not delete', '_id': _id });
 
       issues.splice(idx,1);
       res.json({ result: 'successfully deleted', _id });
