@@ -103,7 +103,7 @@ module.exports = function (app) {
       if(idx === -1) return res.json({ error: 'could not delete', '_id': _id });
 
       issues.splice(idx,1);
-      res.json({ result: 'successfully deleted', _id });
+      res.json({ result: 'successfully deleted', '_id': _id });
     });
     
 };
