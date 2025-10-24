@@ -66,11 +66,11 @@ module.exports = function (app) {
       const db = getDB();
       const issues = db[project] || [];
       const idx = issues.findIndex(i => i._id === _id);
-      if(idx === -1) return res.json({ error: 'could not update', _id });
+  if(idx === -1) return res.json({ error: 'could not update', '_id': _id });
 
       // check if there's at least one field to update
       if(!issue_title && !issue_text && !created_by && !assigned_to && !status_text && (open === undefined || open === null)){
-        return res.json({ error: 'no update field(s) sent', _id });
+        return res.json({ error: 'no update field(s) sent', '_id': _id });
       }
 
       const issue = issues[idx];
